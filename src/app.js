@@ -47,29 +47,30 @@ App = {
       );
     }
   },
+
   loadAccount: async () => {
+    // Set the current blockchain account
     App.account = web3.eth.accounts[0];
-    console.log(App.account);
   },
+
   loadContract: async () => {
+    // Create a JavaScript version of the smart contract
     const todoList = await $.getJSON("TodoList.json");
     App.contracts.TodoList = TruffleContract(todoList);
     App.contracts.TodoList.setProvider(App.web3Provider);
-    // console.log(todoList)
+
+    // Hydrate the smart contract with values from the blockchain
     App.todoList = await App.contracts.TodoList.deployed();
   },
   render: async () => {
-    // To prevent double render
     if (App.loading) {
       return;
     }
 
     App.setLoading(true);
 
-    // Render Acccount from HTML
     $("#account").html(App.account);
 
-    // Render tasks
     await App.renderTasks();
 
     App.setLoading(false);
@@ -82,24 +83,42 @@ App = {
     for (var i = 1; i <= taskCount; i++) {
       const task = await App.todoList.tasks(i);
       const taskId = task[0].toNumber();
-      const taskContent = task[1].toString();
+      const taskContent = task[1];
       const taskCompleted = task[2];
 
+      // Create the html for the task
       const $newTaskTemplate = $taskTemplate.clone();
       $newTaskTemplate.find(".content").html(taskContent);
       $newTaskTemplate
         .find("input")
         .prop("name", taskId)
-        .prop("checked", taskCompleted);
-      // .on("click", App.toggleCompleted);
+        .prop("checked", taskCompleted)
+        .on("click", App.toggleCompleted);
 
+      // Put the task in the correct list
       if (taskCompleted) {
         $("#completedTaskList").append($newTaskTemplate);
       } else {
         $("#taskList").append($newTaskTemplate);
       }
+
+      // Show the task
       $newTaskTemplate.show();
     }
+  },
+
+  createTask: async () => {
+    App.setLoading(true);
+    const content = $("#newTask").val();
+    await App.todoList.createTask(content);
+    window.location.reload();
+  },
+
+  toggleCompleted: async (e) => {
+    App.setLoading(true);
+    const taskId = e.target.name;
+    await App.todoList.toggleCompleted(taskId);
+    window.location.reload();
   },
 
   setLoading: (boolean) => {
