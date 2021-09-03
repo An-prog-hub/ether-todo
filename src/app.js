@@ -1,8 +1,12 @@
 App = {
+  loading: false,
+  contracts: {},
+
   load: async () => {
     await App.loadWeb3();
     await App.loadAccount();
     await App.loadContract();
+    await App.render();
   },
 
   // https://medium.com/metamask/https-medium-com-metamask-breaking-change-injecting-web3-7722797916a8
@@ -49,7 +53,36 @@ App = {
   },
   loadContract: async () => {
     const todoList= await $.getJSON("TodoList.json")
-    console.log(todoList)
+    App.contracts.TodoList = TruffleContract(todoList)
+    App.contracts.TodoList.setProvider(App.web3Provider)
+    // console.log(todoList)
+    App.todoList = await App.contracts.TodoList.deployed()
+  },
+  render: async () => {
+    // To prevent double render
+    if (App.loading) {
+      return
+    }
+
+    App.setLoading(true)
+
+    // Render Acccount from HTML
+    $("#account").html(App.account)
+
+    App.setLoading(false)
+  },
+
+  setLoading: (boolean) => {
+    App.loading = boolean
+    const loader = $('#loader')
+    const content = $('#content')
+    if (boolean) {
+      loader.show()
+      content.hide()
+    } else {
+      loader.hide()
+      content.show()
+    }
   }
 };
 
