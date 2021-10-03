@@ -11,6 +11,7 @@ contract("TodoList", (accounts) => {
     assert.notEqual(address, "")
     assert.notEqual(address, null)
     assert.notEqual(address, undefined)
+    assert.notEqual(address, 1)
   })
 
   it('list tasks', async () => {
